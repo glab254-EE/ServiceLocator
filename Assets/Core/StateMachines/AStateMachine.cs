@@ -9,12 +9,11 @@ namespace Core
         public T Current { get; private set; }
         public virtual void SwitchState(Type Next)
         {
-            Debug.Log(Next.ToString());
-            if (States.ContainsKey(Next))
+            if (States.ContainsKey(Next) && States.TryGetValue(Next, out T next))
             {
                 Current?.Exit();
-                Current = States[Next];
-                Current.Enter();
+                next.Enter();
+                Current = next;
             }
         }
     }

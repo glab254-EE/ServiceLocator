@@ -20,9 +20,7 @@ namespace Core.UI
 
         public void ToggleEnabled(bool enabled)
         {
-            print(enabled);
             OpenButton.interactable = enabled;
-            OpenButton.enabled = enabled;
         }
     }
 }

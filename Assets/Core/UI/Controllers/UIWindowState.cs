@@ -6,7 +6,7 @@ namespace Core.UI.States
 {
     public abstract class AUIWindowState : AState
     {
-        private WindowStateMachine AStateMachine;
+        private WindowStateMachine parentStateMachine;
         private IUIView targetView;
         private IButtonConnectable targetButtonConnectable;
         private System.Type nextState;
@@ -24,14 +24,14 @@ namespace Core.UI.States
         {
             if (nextState != null)
             {
-                AStateMachine.SwitchState(nextState);
+                parentStateMachine.SwitchState(nextState);
             }
         }
-        public AUIWindowState(WindowStateMachine parentMachine, IUIView targetView, IButtonConnectable targetButtonConnectable,System.Type next)
+        public AUIWindowState(WindowStateMachine _parentMachine, IUIView _targetView, IButtonConnectable _targetButtonConnectable,System.Type next)
         {
-            this.AStateMachine = parentMachine;
-            this.targetView = targetView;
-            this.targetButtonConnectable = targetButtonConnectable;
+            parentStateMachine = _parentMachine;
+            targetView = _targetView;
+            targetButtonConnectable = _targetButtonConnectable;
             nextState = next;
         }
     }
