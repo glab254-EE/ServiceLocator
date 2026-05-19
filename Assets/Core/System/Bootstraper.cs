@@ -16,43 +16,10 @@ namespace Core
     {
         [SerializeField] private MainScreenView mainScreenView;
         [SerializeField] private SecondaryScreenView secondaryScreenView;
-        [Header("Services Settings")]
-        [SerializeField] private AudioSource audioSource;
-        [SerializeField] private AudioClip openClip;
-        [SerializeField] private AudioClip closeClip;
-        [SerializeField] private ScoreService scoreServiceReference;
         public WindowStateMachine stateMachine { get; private set; }
         void Awake()
         {
-            SetUpServices();
             SetUpUI();
-        }
-        void SetUpServices()
-        {
-            #region VISUAL services
-            FadeService fadeService = new FadeService();
-            ServiceLocator.TryAddService(fadeService);
-
-            TwoStateSoundPlayer player = new(audioSource, openClip, closeClip);
-            ServiceLocator.TryAddService(player);
-            #endregion
-            #region DATA services
-            ServiceLocator.TryAddService(scoreServiceReference);
-
-            JSONDataSavingService jSONDataSavingService = new JSONDataSavingService();
-            JSONDataLoadingService jSONDataLoadingService = new JSONDataLoadingService();
-
-            ServiceLocator.TryAddService(jSONDataSavingService);
-            ServiceLocator.TryAddService(jSONDataLoadingService);
-
-            PlayerProfileSavingService playerProfileSavingService = new PlayerProfileSavingService();
-            PlayerProfileLoadingService playerProfileLoadingService = new PlayerProfileLoadingService();
-
-            ServiceLocator.TryAddService(playerProfileSavingService);
-            ServiceLocator.TryAddService(playerProfileLoadingService);
-
-            scoreServiceReference.Initialize();
-            #endregion
         }
         void SetUpUI()
         {

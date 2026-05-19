@@ -4,6 +4,7 @@ using Core.Services.Sounds;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Zenject;
 
 namespace Core.UI
 {
@@ -19,6 +20,8 @@ namespace Core.UI
         private GameObject PrimaryFrame;
         [SerializeField]
         private CanvasGroup PrimaryFrameCanvas;
+        [Inject] FadeService FadeService;
+        [Inject] TwoStateSoundPlayer SoundService;
         public void ConnectToButton(UnityAction action)
         {
             CloseButton.onClick.AddListener(action);
@@ -31,7 +34,7 @@ namespace Core.UI
         public void ToggleEnabled(bool enabled)
         {
             PlaySound(enabled);
-            if (PrimaryFrameCanvas != null && ServiceLocator.TryGetService(out FadeService service))
+            if (PrimaryFrameCanvas != null && FadeService != null)
             {
                 float targetA = enabled ? 1 : 0;
                 float targetTime = enabled ? FadeDurationAppear : FadeDurationDissappear;
@@ -43,7 +46,7 @@ namespace Core.UI
                 {
                     CloseButton.interactable = false;
                 }
-                service.FadeCanvas(PrimaryFrameCanvas, targetA, targetTime, () =>
+                FadeService.FadeCanvas(PrimaryFrameCanvas, targetA, targetTime, () =>
                 {
                     PrimaryFrame.SetActive(enabled);
                     CloseButton.interactable = enabled;
@@ -56,14 +59,14 @@ namespace Core.UI
         }
         private void PlaySound(bool state)
         {
-            if (!ServiceLocator.TryGetService(out TwoStateSoundPlayer player)) return;
+            if (SoundService == null) return;
             if (state == true)
             {
-                player.PlayOpenSound();
+                SoundService.PlayOpenSound();
             }
             else
             {
-                player.PlayCloseSound();
+                SoundService.PlayCloseSound();
             }
         }
     }

@@ -3,18 +3,40 @@ using Core.Services.Data.PlayerProfile;
 using System;
 using System.Collections;
 using UnityEngine;
+using Zenject;
 namespace Core.Services.Score
 {
     public class ScoreService: MonoBehaviour, IService
     {
+        private PlayerProfileSavingService playerProfileSavingService;
+         private JSONDataSavingService jsonDataSavingService;
+
+        private PlayerProfileLoadingService playerProfileLoadingService;
+        private JSONDataLoadingService jSONDataLoadingService;
         public event Action<double> OnScoreUpdated;
         public double CurrentScore { get; private set; } = 0;
         private double counterScore = 0;
         private Coroutine coroutine;
         void OnApplicationQuit()
         {
-            StopCoroutine(coroutine);
+            if (coroutine != null) StopCoroutine(coroutine);
             SaveScore();
+        }
+        [Inject]
+        void Initialize(PlayerProfileSavingService ps, JSONDataSavingService js, PlayerProfileLoadingService pl, JSONDataLoadingService jl)
+        {
+            playerProfileSavingService = ps;
+            playerProfileLoadingService = pl;
+
+            jSONDataLoadingService = jl;
+            jsonDataSavingService = js;
+
+            CurrentScore = 0;
+            counterScore = 0;
+            LoadScore();
+            OnScoreUpdated?.Invoke(CurrentScore);
+            coroutine = StartCoroutine(CounterEnumerator());
+            print("Init");
         }
         public void OnCounterButtonPress()
         {
@@ -24,40 +46,31 @@ namespace Core.Services.Score
         }
         public void SaveScore()
         {
-            if (ServiceLocator.TryGetService(out PlayerProfileSavingService firstService))
+            if (playerProfileSavingService != null)
             {
-                firstService.TrySave((float)CurrentScore, "score");
+                playerProfileSavingService.TrySave((float)CurrentScore, "score");
             }
 
-            if (ServiceLocator.TryGetService(out JSONDataSavingService jsonService))
+            if (jsonDataSavingService != null)
             {
-                jsonService.TrySave(CurrentScore, "SaveData");
+                jsonDataSavingService.TrySave(CurrentScore, "SaveData");
             }
-        }
-        public void Initialize()
-        {
-
-            CurrentScore = 0;
-            counterScore = 0;
-            LoadScore();
-            OnScoreUpdated?.Invoke(CurrentScore);
-            coroutine = StartCoroutine(CounterEnumerator());
         }
         private void LoadScore()
         {
             bool Loaded = false;
-            if (ServiceLocator.TryGetService(out PlayerProfileLoadingService firstService))
+            if (playerProfileLoadingService != null)
             {
-                if (firstService.TryGetData("score",out double res))
+                if (playerProfileLoadingService.TryGetData("score", out double res))
                 {
                     CurrentScore = res;
                     Loaded = true;
                 }
             }
 
-            if (!Loaded && ServiceLocator.TryGetService(out JSONDataLoadingService jsonService))
+            if (!Loaded && jSONDataLoadingService != null)
             {
-                if (jsonService.TryGetData("SaveData",out double res))
+                if (jSONDataLoadingService.TryGetData("SaveData", out double res))
                 {
                     CurrentScore = res;
                     Loaded = true;
