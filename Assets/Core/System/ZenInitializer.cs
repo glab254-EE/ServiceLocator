@@ -13,6 +13,7 @@ namespace Core
     public class ZenInitializer : MonoInstaller
     {
         [Header("Services Settings")]
+        [SerializeField] private GameObject audioSourcePrefab;
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip openClip;
         [SerializeField] private AudioClip closeClip;
@@ -22,6 +23,11 @@ namespace Core
         [SerializeField] private float projectileDeathTime;
         public override void InstallBindings()
         {
+            if (audioSourcePrefab != null)
+            {
+                Container.Bind<SoundService>().FromInstance(new (audioSourcePrefab)).AsSingle();
+            }
+
             Container.Bind<FadeService>().AsSingle();
             if (audioSource != null)
             {
@@ -37,8 +43,8 @@ namespace Core
 
             if (projectilesPrefab != null)
             {
-                ProjectileSpawningService service = new ProjectileSpawningService(projectilesPrefab);
-                Container.Bind<ProjectileSpawningService>().FromInstance(service).AsTransient().NonLazy();
+                Container.BindFactory<ProjectileController,ProjectileController.Factory>().FromComponentInNewPrefab(projectilesPrefab).NonLazy();
+                Container.Bind<ProjectileSpawningService>().AsSingle();
             }
         }
     }

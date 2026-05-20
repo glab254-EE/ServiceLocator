@@ -1,3 +1,4 @@
+using Core.Services.Sounds;
 using UnityEngine;
 using Zenject;
 
@@ -9,18 +10,31 @@ namespace Core.Projectiles
         private Rigidbody2D rb;
         private Vector2 velocity;
         private float deathTimer;
+        private float rotationSpeed = 1f;
+        private float speed;
         private ProjectileSpawningService source;
         private Vector2 OriginPoint = Vector2.zero;
-        private AudioSource Asource;
         private AudioClip destroyClip;
+        private Transform targetTransform = null;
+        private Rigidbody2D targetRB = null;
+        [Inject]private SoundService soundService;
         void Start()
         {
             rb = GetComponent<Rigidbody2D>();
-            Asource = GetComponent<AudioSource>();
         }
         void FixedUpdate()
         {
             if (!gameObject.activeInHierarchy) return;
+            if (targetTransform != null)
+            {
+                Vector2 targetPos = (Vector2)targetTransform.position;
+                if (targetRB != null)
+                {
+                    targetPos += targetRB.linearVelocity;
+                }
+                Vector2 directionNormal = (targetPos-(Vector2)transform.position).normalized;
+                velocity = Vector2.Lerp(velocity,directionNormal*speed,Time.deltaTime*rotationSpeed);
+            }
             if (rb != null)
             {
                 rb.linearVelocity = velocity;
@@ -34,8 +48,9 @@ namespace Core.Projectiles
                 Dissable();
             }
         }
-        public void SetUp(ProjectileSpawningService origin, Vector2 from, Vector2 _velocity, float timeUntilDespawn, LayerMask IncludedMask, AudioClip appearClip = null, AudioClip destroyedClip = null)
+        public void SetUp(ProjectileSpawningService origin, Vector2 from, Vector2 _velocity, float timeUntilDespawn, LayerMask IncludedMask, AudioClip appearClip = null, AudioClip destroyedClip = null, GameObject targetObj = null)
         {
+            speed = _velocity.magnitude;
             source = origin;
             deathTimer = timeUntilDespawn;
             velocity = _velocity;
@@ -43,18 +58,27 @@ namespace Core.Projectiles
             rb = GetComponent<Rigidbody2D>();
             rb.includeLayers = IncludedMask;
             OriginPoint = from;
-            if (Asource != null)
+            if (soundService != null)
             {
-                if (appearClip != null) Asource.PlayOneShot(appearClip);
+                if (appearClip != null) soundService.PlaySound(transform.position,appearClip);
                 if (destroyedClip != null) destroyClip = destroyedClip;
+            }
+            if (targetObj != null )
+            {
+                targetTransform = targetObj.transform;
+                targetObj.TryGetComponent(out targetRB);
             }
         }
         public void Dissable()
         {
+            targetTransform = null;
+            targetRB = null;
             source.ReturnObject(this);
         }
         public void TearDown()
         {
+            targetTransform = null;
+            targetRB = null;
             gameObject.SetActive(false);
             velocity = Vector2.zero;
         }
@@ -68,12 +92,16 @@ namespace Core.Projectiles
             }
             if (gameObject.activeInHierarchy)
             {
-                if (Asource != null && destroyClip != null)
+                if (soundService != null && destroyClip != null)
                 {
-                    Asource.PlayOneShot(destroyClip);
+                    soundService.PlaySound(transform.position,destroyClip);
                 }
                 Dissable();
             }
+        }
+        public class Factory : PlaceholderFactory<ProjectileController>
+        {
+            
         }
     }
 }

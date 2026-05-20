@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 namespace Core.Projectiles
 {
@@ -7,15 +8,15 @@ namespace Core.Projectiles
     {
         public List<ProjectileController> ActiveObjects = new();
         public Stack<ProjectileController> InactiveObjects = new();
-        private GameObject prefab;
-        public bool TrySpawnProjectile(Vector2 Position, Vector2 Velocity, out GameObject createdObject, LayerMask IncludedMask = default, float despawningTime = 4, AudioClip appearClip = null, AudioClip destroyedClip = null)
+        private ProjectileController.Factory _factory;
+        public bool TrySpawnProjectile(Vector2 Position, Vector2 Velocity, out GameObject createdObject, LayerMask IncludedMask = default, float despawningTime = 4, AudioClip appearClip = null, AudioClip destroyedClip = null, GameObject targetObj = null)
         {
             createdObject = null;
-            if (prefab == null) return false;
+            if (_factory == null) return false;
             ProjectileController controller = GetNewObject();
             if (controller == null) return false;
             controller.transform.position = Position;
-            controller.SetUp(this, Position, Velocity, despawningTime, IncludedMask,appearClip,destroyedClip);
+            controller.SetUp(this, Position, Velocity, despawningTime, IncludedMask,appearClip,destroyedClip,targetObj);
             createdObject = controller.gameObject;
             ActiveObjects.Add(controller);
             return true;
@@ -31,20 +32,20 @@ namespace Core.Projectiles
         }
         private ProjectileController GetNewObject()
         {
-            ProjectileController output = null;
-            if (!InactiveObjects.TryPop(out output))
+            if (!InactiveObjects.TryPop(out ProjectileController output))
             {
-                output = Behaviour.Instantiate(prefab).GetComponent<ProjectileController>();
+                output = _factory.Create();
             }
             return output;
         }
-        public ProjectileSpawningService(GameObject _prefab, int startingCount = 4)
+        [Inject]
+        private void Construct(ProjectileController.Factory factory)
         {
-            prefab = _prefab;
-
-            for (int i = 0; i < startingCount; i++)
+            _factory = factory;
+            for (int i = 0; i < 4; i++)
             {
-                GameObject newO = Behaviour.Instantiate(prefab);
+                ProjectileController newI = _factory.Create();
+                GameObject newO = newI.gameObject;
                 newO.SetActive(false);
                 InactiveObjects.Push(newO.GetComponent<ProjectileController>());
             }

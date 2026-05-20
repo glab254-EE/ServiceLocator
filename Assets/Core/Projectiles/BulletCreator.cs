@@ -16,6 +16,8 @@ namespace Core.Projectiles
         private AudioClip appearClip;
         [SerializeField]
         private AudioClip destroyedClip;
+        [SerializeField]
+        private GameObject target;
         [Inject]
         private ProjectileSpawningService service;
         private InputSystem_Actions ia;
@@ -37,7 +39,7 @@ namespace Core.Projectiles
             Vector2 pos = ca.ScreenToWorldPoint(Mouse.current.position.value);
             if (pos != null && service != null)
             {
-                service.TrySpawnProjectile(pos, velocity, out GameObject _, layerMask, despawnTime, appearClip, destroyedClip);
+                service.TrySpawnProjectile(pos, velocity, out GameObject _, layerMask, despawnTime, appearClip, destroyedClip, target);
             }
         }
     }
